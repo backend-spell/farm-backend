@@ -44,16 +44,16 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-       
+
         $user = User::where('email', $request->email)->first();
         if (!$user) return $this->errorResponse([], "User not found.", 401);
 
 
-        if (Auth::attempt(['email' =>$request->email, 'password' => $request->password])) {
+        if (Hash::check($request->password, $user->password)) {
             $oClient = OClient::where('password_client', 1)->first();
-            return $this->getTokenAndRefreshToken($oClient,$user, $request->password);
+            return $this->getTokenAndRefreshToken($oClient, $user, $request->password);
         } else {
-            return $this->unauthorizedResponse(['error' => 'Unauthorized'], "Invalid Email/Password");
+            return $this->unauthorizedResponse(['error' => 'Password is incorrect.'], "Invalid Credentials");
         }
     }
 
@@ -75,13 +75,12 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $request->user()->token()->revoke();
-        return $this->successResponse([],'Successfully logged out.');
+        return $this->successResponse([], 'Successfully logged out.');
     }
 
 
     private function getTokenAndRefreshToken(OClient $oClient, $user, $password)
     {
-
         $oClient = OClient::where('password_client', 1)->first();
         $http = new Client;
         $response = $http->request('POST', 'http://farm-backend.test/oauth/token', [
@@ -96,9 +95,9 @@ class AuthController extends Controller
         ]);
 
         $result = json_decode((string) $response->getBody(), true);
-        return $this->successResponse([
-            'token' => $result, 
-            'user' => $user
+        return response()->json([
+            'user' => $user,
+            'token' => $result
         ]);
     }
 }

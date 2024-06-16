@@ -19,9 +19,9 @@ class IsAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (Auth::user() &&  Auth::user()->role == 'Admin') {
+        if (Auth::user() &&  Auth::user()->roles->first()->name == 'Admin') {
             return $next($request);
-       }
-       return $this->unauthorizedResponse(['data' => "Permission Denied..., your are not admin."], "Unauthorized..");
+        }
+        return $this->unauthorizedResponse(['data' => "Permission Denied..., your are not admin."], "Unauthorized..");
     }
 }
